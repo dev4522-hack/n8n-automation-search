@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Auth Test</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-black text-white min-h-screen flex items-center justify-center">
+    <div class="bg-gray-900 p-8 rounded-lg w-96">
+        <h1 class="text-2xl mb-4">Supabase Auth Test</h1>
+        
+        <div id="status" class="mb-4 p-2 bg-gray-800 rounded text-sm font-mono"></div>
+        
+        <div class="space-y-4">
+            <input type="email" id="email" placeholder="Email" class="w-full p-2 bg-gray-800 rounded">
+            <input type="password" id="password" placeholder="Password" class="w-full p-2 bg-gray-800 rounded">
+            <button onclick="testSignUp()" class="w-full bg-green-600 p-2 rounded">Test Sign Up</button>
+            <button onclick="testSignIn()" class="w-full bg-blue-600 p-2 rounded">Test Sign In</button>
+        </div>
+        
+        <div id="result" class="mt-4 p-2 bg-gray-800 rounded text-sm"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://fmdxmvolwlvbvrqxkrth.supabase.co'
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtZHhtdm9sd2x2YnZycXhrcnRoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4OTg1NzAsImV4cCI6MjA3NTQ3NDU3MH0.HVTxZL1E2VA37J-szB9Su0Ny1nIEuRHj6rTIZ5l4d_w'
+        
+        let supabase = null;
+        const status = document.getElementById('status');
+        const result = document.getElementById('result');
+        
+        function log(message) {
+            console.log(message);
+            status.textContent = message;
+        }
+        
+        function showResult(message) {
+            result.textContent = message;
+        }
+        
+        // Initialize Supabase
+        try {
+            log('Initializing Supabase...');
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            log('✅ Supabase initialized successfully!');
+        } catch (error) {
+            log('❌ Failed to initialize Supabase: ' + error.message);
+        }
+        
+        async function testSignUp() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                showResult('Please enter email and password');
+                return;
+            }
+            
+            try {
+                log('Attempting sign up...');
+                const { data, error } = await supabase.auth.signUp({
+                    email: email,
+                    password: password
+                });
+                
+                if (error) {
+                    showResult('Sign up error: ' + error.message);
+                    log('❌ Sign up failed: ' + error.message);
+                } else {
+                    showResult('✅ Sign up successful! Check your email for verification.');
+                    log('✅ Sign up successful');
+                    console.log('Sign up data:', data);
+                }
+            } catch (error) {
+                showResult('Sign up exception: ' + error.message);
+                log('❌ Sign up exception: ' + error.message);
+            }
+        }
+        
+        async function testSignIn() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                showResult('Please enter email and password');
+                return;
+            }
+            
+            try {
+                log('Attempting sign in...');
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+                
+                if (error) {
+                    showResult('Sign in error: ' + error.message);
+                    log('❌ Sign in failed: ' + error.message);
+                } else {
+                    showResult('✅ Sign in successful!');
+                    log('✅ Sign in successful');
+                    console.log('Sign in data:', data);
+                }
+            } catch (error) {
+                showResult('Sign in exception: ' + error.message);
+                log('❌ Sign in exception: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

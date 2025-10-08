@@ -1,0 +1,19 @@
+#!/bin/bash
+# Git deployment commands (run these in PowerShell)
+
+# Initialize git repository
+git init
+
+# Add all files
+git add .
+
+# Commit files
+git commit -m "Initial commit - N8N Automation Search App"
+
+# Add your GitHub repository (replace with your actual repo URL)
+git remote add origin https://github.com/YOUR_USERNAME/n8n-automation-search.git
+
+# Push to GitHub
+git push -u origin main
+
+echo "✅ Code pushed to GitHub successfully!"

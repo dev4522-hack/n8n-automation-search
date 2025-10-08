@@ -1,0 +1,181 @@
+require('dotenv').config();
+const express = require('express');
+const fetch = require('node-fetch');
+const path = require('path');
+const cors = require('cors');
+
+// Cache management
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+let cachedData = {
+  timestamp: 0,
+  data: null
+};
+
+const app = express();
+app.use(cors());
+app.use(express.static(path.join(__dirname, 'public')));
+
+const SHEET_ID = process.env.SHEET_ID || '';
+const API_KEY = process.env.API_KEY || '';
+
+if (!SHEET_ID || !API_KEY) {
+  console.warn('Warning: SHEET_ID or API_KEY not set. Set them in a .env file or environment before running.');
+}
+
+// Fetch and process sheet data
+async function fetchSheetData() {
+  const range = 'A:Z';
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${range}?key=${API_KEY}`;
+  const r = await fetch(url);
+  if (!r.ok) {
+    const txt = await r.text();
+    throw new Error(`Failed to fetch sheet: ${txt}`);
+  }
+  const data = await r.json();
+  return data.values || [];
+}
+
+// Process and format sheet data
+function processSheetData(values) {
+  const headers = values[0] || [];
+  return values.slice(1).map(row => {
+    const obj = {};
+    for (let i = 0; i < headers.length; i++) {
+      obj[headers[i]] = row[i] || '';
+    }
+    // Add metadata
+    obj.searchableText = Object.values(obj).join(' ').toLowerCase();
+    return obj;
+  });
+}
+
+// Search endpoint: /search?q=term
+app.get('/search', async (req, res) => {
+  const q = (req.query.q || '').toLowerCase().trim();
+  const category = req.query.category;
+  const creator = req.query.creator;
+  const sort = req.query.sort || 'popular';
+
+  if (!SHEET_ID || !API_KEY) {
+    return res.status(400).json({ 
+      error: 'configuration_error',
+      message: 'Server configuration incomplete' 
+    });
+  }
+
+  try {
+    // Check cache first
+    const now = Date.now();
+    if (!cachedData.data || now - cachedData.timestamp > CACHE_DURATION) {
+      const values = await fetchSheetData();
+      cachedData.data = processSheetData(values);
+      cachedData.timestamp = now;
+    }
+
+    let results = [...cachedData.data]; // Create a copy of the data
+
+    // Apply filters
+    if (q) {
+      results = results.filter(row => {
+        const searchableText = Object.values(row).join(' ').toLowerCase();
+        return searchableText.includes(q);
+      });
+    }
+    if (category) {
+      results = results.filter(row => row.Category?.toLowerCase() === category.toLowerCase());
+    }
+    if (creator) {
+      results = results.filter(row => row.Creator?.toLowerCase() === creator.toLowerCase());
+    }
+
+    // Apply sorting
+    results.sort((a, b) => {
+      switch (sort) {
+        case 'name':
+          return (a.Name || '').localeCompare(b.Name || '');
+        case 'recent':
+          return new Date(b.Created || 0) - new Date(a.Created || 0);
+        case 'popular':
+        default:
+          return (b.Views || 0) - (a.Views || 0);
+      }
+    });
+
+    // Get unique categories and creators for filters
+    const categories = [...new Set(cachedData.data.map(row => row.Category).filter(Boolean))];
+    const creators = [...new Set(cachedData.data.map(row => row.Creator).filter(Boolean))];
+
+    res.json({ 
+      results,
+      metadata: {
+        total: results.length,
+        categories,
+        creators,
+        timestamp: cachedData.timestamp
+      }
+    });
+  } catch (err) {
+    console.error('Search error:', err);
+    res.status(500).json({ 
+      error: 'search_error',
+      message: 'Failed to search templates',
+      detail: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+});
+
+    // Assume first row is header
+    const headers = values[0] || [];
+    const rows = values.slice(1).map(row => {
+      const obj = {};
+      for (let i = 0; i < headers.length; i++) {
+        obj[headers[i]] = row[i] || '';
+      }
+      return obj;
+    });
+
+    const results = rows.filter(row => {
+      // check all fields for a substring match
+      return Object.values(row).some(v => String(v).toLowerCase().includes(q));
+    });
+
+    res.json({ results });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'internal_error', detail: String(err) });
+  }
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    cache: {
+      age: Date.now() - cachedData.timestamp,
+      size: cachedData.data ? cachedData.data.length : 0
+    }
+  });
+});
+
+// Clear cache endpoint (for admin use)
+app.post('/admin/clear-cache', (req, res) => {
+  cachedData.data = null;
+  cachedData.timestamp = 0;
+  res.json({ status: 'ok', message: 'Cache cleared' });
+});
+
+const port = process.env.PORT || 3000;
+const startServer = (portToTry) => {
+  const server = app.listen(portToTry, () => {
+    console.log(`Server listening on http://localhost:${portToTry}`);
+  }).on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.log(`Port ${portToTry} is busy, trying ${portToTry + 1}...`);
+      startServer(portToTry + 1);
+    } else {
+      console.error('Server error:', err);
+    }
+  });
+};
+
+startServer(port);

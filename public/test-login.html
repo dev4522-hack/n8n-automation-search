@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Login</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <button id="testLogin">Test Login Button</button>
+    
+    <script src="supabase.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded');
+            console.log('supabase object:', window.supabase);
+            console.log('authHelpers object:', window.authHelpers);
+            console.log('Login button element:', document.getElementById('testLogin'));
+            
+            const testBtn = document.getElementById('testLogin');
+            if (testBtn) {
+                testBtn.addEventListener('click', () => {
+                    console.log('Test button clicked!');
+                    alert('Button works!');
+                });
+            }
+        });
+    </script>
+</body>
+</html>

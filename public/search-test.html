@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Test</title>
+</head>
+<body>
+    <h1>Search Test</h1>
+    <input type="text" id="searchBox" placeholder="Type 'discord' to test">
+    <button onclick="testSearch()">Test Search</button>
+    <div id="result"></div>
+    
+    <script>
+        async function testSearch() {
+            const searchTerm = document.getElementById('searchBox').value || 'discord';
+            console.log('Testing search for:', searchTerm);
+            
+            try {
+                const response = await fetch(`/search?search=${encodeURIComponent(searchTerm)}&sort=popular`);
+                const data = await response.json();
+                console.log('Search result:', data);
+                
+                document.getElementById('result').innerHTML = `
+                    <h2>Results: ${data.results.length} items</h2>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = 'Error: ' + error.message;
+            }
+        }
+        
+        // Test on page load
+        testSearch();
+    </script>
+</body>
+</html>

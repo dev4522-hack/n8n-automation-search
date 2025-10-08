@@ -538,6 +538,50 @@ async function applyFilters() {
     }
 }
 
+// Function to handle example searches
+window.searchExample = function(term) {
+    searchInput.value = term;
+    filterState.search = term;
+    applyFilters();
+    searchInput.focus();
+};
+
+// Function to show welcome message
+function showWelcomeMessage() {
+    resultsContainer.innerHTML = `
+        <div class="col-span-full text-center py-16">
+            <div class="max-w-2xl mx-auto">
+                <h2 class="text-4xl font-bold text-white mb-4">🚀 Welcome to n8n Automation Search</h2>
+                <p class="text-xl text-gray-300 mb-6">Discover 235+ n8n automation templates created by the community</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+                    <div class="bg-green-900/20 p-6 rounded-lg border border-green-500/30">
+                        <h3 class="text-lg font-semibold text-green-400 mb-2">🔍 Search Templates</h3>
+                        <p class="text-gray-300">Type anything to search through hundreds of automation workflows</p>
+                    </div>
+                    <div class="bg-blue-900/20 p-6 rounded-lg border border-blue-500/30">
+                        <h3 class="text-lg font-semibold text-blue-400 mb-2">❤️ Save Favorites</h3>
+                        <p class="text-gray-300">Sign up to save your favorite templates and track search history</p>
+                    </div>
+                    <div class="bg-purple-900/20 p-6 rounded-lg border border-purple-500/30">
+                        <h3 class="text-lg font-semibold text-purple-400 mb-2">🎬 Watch & Learn</h3>
+                        <p class="text-gray-300">Each template includes YouTube tutorials and download links</p>
+                    </div>
+                </div>
+                <div class="mt-8">
+                    <p class="text-gray-400 mb-4">Ready to explore? Try searching for:</p>
+                    <div class="flex flex-wrap justify-center gap-2">
+                        <button onclick="searchExample('discord')" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-full text-sm transition-colors">Discord</button>
+                        <button onclick="searchExample('linkedin')" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-full text-sm transition-colors">LinkedIn</button>
+                        <button onclick="searchExample('email')" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-full text-sm transition-colors">Email</button>
+                        <button onclick="searchExample('ai')" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-full text-sm transition-colors">AI</button>
+                        <button onclick="searchExample('webhook')" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-full text-sm transition-colors">Webhook</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
 // Function to load initial data
 async function loadInitialData() {
     try {
@@ -551,8 +595,8 @@ async function loadInitialData() {
         searchInput.value = '';
         sortFilter.value = 'popular';
         
-        // Load all templates initially (empty search shows all)
-        await applyFilters();
+        // Show welcome message instead of loading all templates
+        showWelcomeMessage();
     } catch (error) {
         console.error('Error loading initial data:', error);
         resultsContainer.innerHTML = `
@@ -592,12 +636,8 @@ searchInput.addEventListener('input', (e) => {
     const searchTerm = e.target.value.trim();
     
     if (!searchTerm) {
-        // Clear results if search is empty
-        resultsContainer.innerHTML = `
-            <div class="col-span-full text-center py-12">
-                <p class="text-gray-400 text-lg">Type to search for automations...</p>
-            </div>
-        `;
+        // Show welcome message when search is cleared
+        showWelcomeMessage();
         return;
     }
     

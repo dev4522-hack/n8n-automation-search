@@ -16,6 +16,7 @@ const filterData = {
 // Authentication state
 let currentUser = null;
 let userFavorites = [];
+let welcomeScreenActive = true; // Flag to prevent automatic template loading
 
 // Authentication DOM elements
 const loginBtn = document.getElementById('loginBtn');
@@ -504,7 +505,19 @@ function getYoutubeId(url) {
 // Function to apply filters and fetch workflows
 async function applyFilters() {
     try {
-        console.log('Applying filters with state:', filterState);
+        console.log('🎯 applyFilters: Called with state:', filterState);
+        
+        // If welcome screen should be active and no search term, show welcome instead
+        if (welcomeScreenActive && !filterState.search.trim()) {
+            console.log('🎯 applyFilters: Welcome screen active, showing welcome message instead');
+            showWelcomeMessage();
+            return;
+        }
+        
+        // Set welcome screen to inactive when search is performed
+        welcomeScreenActive = false;
+        
+        console.log('🎯 applyFilters: Proceeding with search');
         
         // Build query string based on filter state
         const params = new URLSearchParams({
@@ -548,6 +561,7 @@ window.searchExample = function(term) {
 
 // Function to show welcome message
 function showWelcomeMessage() {
+    console.log('🎯 showWelcomeMessage: Starting to display welcome screen...');
     resultsContainer.innerHTML = `
         <div class="col-span-full text-center py-16">
             <div class="max-w-2xl mx-auto">
@@ -582,10 +596,19 @@ function showWelcomeMessage() {
     `;
 }
 
+// Function to handle example searches
+window.searchExample = function(searchTerm) {
+    console.log('🎯 searchExample: Searching for:', searchTerm);
+    welcomeScreenActive = false; // Disable welcome screen
+    searchInput.value = searchTerm;
+    filterState.search = searchTerm;
+    applyFilters();
+}
+
 // Function to load initial data
 async function loadInitialData() {
     try {
-        console.log('Loading initial data...');
+        console.log('🎯 loadInitialData: Starting...');
         
         // Initialize filter state
         filterState.search = '';
@@ -596,7 +619,9 @@ async function loadInitialData() {
         sortFilter.value = 'popular';
         
         // Show welcome message instead of loading all templates
+        console.log('🎯 loadInitialData: Calling showWelcomeMessage...');
         showWelcomeMessage();
+        console.log('🎯 loadInitialData: Welcome message displayed');
     } catch (error) {
         console.error('Error loading initial data:', error);
         resultsContainer.innerHTML = `
@@ -637,6 +662,7 @@ searchInput.addEventListener('input', (e) => {
     
     if (!searchTerm) {
         // Show welcome message when search is cleared
+        welcomeScreenActive = true; // Re-enable welcome screen
         showWelcomeMessage();
         return;
     }

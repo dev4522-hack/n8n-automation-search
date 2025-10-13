@@ -65,8 +65,8 @@ function updateAuthUI(user) {
         userFavorites = [];
         
         // Update search placeholder for non-authenticated users
-        searchInput.placeholder = "Click to unlock advanced search features...";
-        searchInput.classList.add('cursor-pointer');
+        searchInput.placeholder = "Search 235+ automation templates...";
+        searchInput.classList.remove('cursor-pointer');
     }
 }
 
@@ -158,58 +158,7 @@ async function toggleFavorite(templateData) {
     }
 }
 
-function showSearchSignUpPrompt() {
-    // Create a custom modal for search signup prompt
-    const existingPrompt = document.getElementById('searchSignUpPrompt');
-    if (existingPrompt) {
-        existingPrompt.remove();
-    }
-    
-    const prompt = document.createElement('div');
-    prompt.id = 'searchSignUpPrompt';
-    prompt.className = 'fixed inset-0 z-50 flex items-center justify-center modal-overlay';
-    prompt.innerHTML = `
-        <div class="modal-content bg-black/95 border border-green-500/30 rounded-2xl p-8 w-full max-w-md mx-4 backdrop-blur-sm show">
-            <div class="text-center">
-                <div class="mb-4">
-                    <svg class="w-16 h-16 text-green-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                </div>
-                <h2 class="text-2xl font-bold text-white mb-3">Unlock Advanced Search</h2>
-                <p class="text-gray-300 mb-6">Create an account to access powerful search features, save your favorite templates, and track your search history.</p>
-                
-                <div class="space-y-3">
-                    <button onclick="closeSearchPrompt(); showAuthModal(true);" 
-                            class="w-full auth-submit-btn text-white font-bold py-3 px-6 rounded-xl">
-                        Create Account
-                    </button>
-                    <button onclick="closeSearchPrompt(); showAuthModal(false);" 
-                            class="w-full bg-gray-700 hover:bg-gray-600 text-white font-medium py-3 px-6 rounded-xl transition-all">
-                        Sign In
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(prompt);
-    
-    // Close on click outside
-    prompt.addEventListener('click', (e) => {
-        if (e.target === prompt) {
-            closeSearchPrompt();
-        }
-    });
-}
-
-function closeSearchPrompt() {
-    const prompt = document.getElementById('searchSignUpPrompt');
-    if (prompt) {
-        prompt.remove();
-    }
-}
+// Guest search is now enabled - no signup prompt needed
 
 function showAuthModal(isSignUp = false) {
     console.log('showAuthModal called with isSignUp:', isSignUp);
@@ -636,20 +585,14 @@ async function loadInitialData() {
 
 // Event listeners for filters
 let searchTimeout;
-// Add search bar click handler for non-logged-in users
-searchInput.addEventListener('focus', (e) => {
-    if (!currentUser) {
-        // Show a friendly sign-up prompt for non-logged-in users
-        e.target.blur(); // Remove focus from search bar
-        showSearchSignUpPrompt();
-    }
-});
+// Allow all users to search - authentication is optional
 
 // Handle Enter key press in search
 searchInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
         e.preventDefault();
         clearTimeout(searchTimeout);
+        welcomeScreenActive = false; // Disable welcome screen for search
         filterState.search = e.target.value.trim();
         applyFilters();
     }
@@ -669,6 +612,7 @@ searchInput.addEventListener('input', (e) => {
     
     searchTimeout = setTimeout(() => {
         console.log('Executing search for:', searchTerm);
+        welcomeScreenActive = false; // Disable welcome screen for search
         filterState.search = searchTerm;
         applyFilters();
     }, 300); // Debounce search input
